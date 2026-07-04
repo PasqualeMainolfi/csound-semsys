@@ -12,8 +12,9 @@ on:
   workflow_dispatch: {}   # allow manual runs to test the build
 
 env:
-  # Csound source ref to take headers from. Pin to a Csound 7 tag for reproducibility.
-  CSOUND_REF: master
+  # Csound source ref to take headers from. Pinned to the Csound 7 tag whose
+  # headers this plugin was built and verified against (also the runtime Csound).
+  CSOUND_REF: 7.0.0-beta.17
 
 jobs:
   build:
