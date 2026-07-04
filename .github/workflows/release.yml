@@ -11,6 +11,11 @@ on:
     tags: ["v*"]
   workflow_dispatch: {}   # allow manual runs to test the build
 
+# creating/updating the release + uploading assets needs write on contents;
+# the default GITHUB_TOKEN is read-only.
+permissions:
+  contents: write
+
 env:
   # Csound source ref to take headers from. Pinned to the Csound 7 tag whose
   # headers this plugin was built and verified against (also the runtime Csound).
