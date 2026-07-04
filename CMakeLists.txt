@@ -55,6 +55,7 @@ find_path(CSOUND_INCLUDE_DIR
         /usr/include/csound
         /opt/homebrew/include/csound
         /Library/Frameworks/CsoundLib64.framework/Headers
+        /Applications/Csound/CsoundLib64.framework/Headers
     PATH_SUFFIXES include include/csound)
 
 if(NOT CSOUND_INCLUDE_DIR)
