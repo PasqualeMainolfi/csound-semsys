@@ -1,0 +1,28 @@
+# build / release output
+/build/
+/dist/
+*.o
+*.so
+*.dylib
+*.dll
+
+# cmake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+
+# macOS
+.DS_Store
+
+# utest artifacts
+utest/espc/*
+!utest/espc/.gitkeep
+utest/utest_data/*
+!utest/utest_data/.gitkeep
+!utest/utest_data/audio_space_wav/
+!utest/utest_data/texts/
+utest/utest_data/audio_space_wav/*
+!utest/utest_data/audio_space_wav/.gitkeep
+utest/utest_data/texts/*
+!utest/utest_data/texts/.gitkeep

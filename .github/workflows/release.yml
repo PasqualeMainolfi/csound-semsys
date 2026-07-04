@@ -1,0 +1,73 @@
+name: release
+
+# Build the semsys binaries on every platform and attach them to the GitHub
+# release when a v* tag is pushed. Only the Csound plugin *headers* are needed at
+# build time (onnxruntime is loaded at runtime via dlopen), so we just clone the
+# Csound source for its include/ dir -- no Csound build, no extra deps. The
+# generated version.h is picked up from Android/CsoundAndroid/jni by CMakeLists.txt.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: {}   # allow manual runs to test the build
+
+env:
+  # Csound source ref to take headers from. Pin to a Csound 7 tag for reproducibility.
+  CSOUND_REF: master
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest,  name: linux,            lib: libsemsys.so,    arch: "" }
+          - { os: macos-latest,   name: macos-universal,  lib: libsemsys.dylib, arch: "arm64;x86_64" }
+          - { os: windows-latest, name: windows,          lib: semsys.dll,      arch: "" }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone Csound headers
+        uses: actions/checkout@v4
+        with:
+          repository: csound/csound
+          ref: ${{ env.CSOUND_REF }}
+          path: csound-src
+
+      - name: Configure
+        shell: bash
+        run: |
+          args=(-S . -B build -DCMAKE_BUILD_TYPE=Release
+                -DCSOUND_INCLUDE_DIR="${GITHUB_WORKSPACE}/csound-src/include"
+                -DCMAKE_POLICY_VERSION_MINIMUM=3.5)
+          [ -n "${{ matrix.arch }}" ] && args+=(-DCMAKE_OSX_ARCHITECTURES="${{ matrix.arch }}")
+          cmake "${args[@]}"
+
+      - name: Build
+        run: cmake --build build --config Release --target semsys --parallel
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir -p dist
+          # MSVC drops the artifact in build/Release/, single-config in build/.
+          lib=$(find build -name '${{ matrix.lib }}' | head -1)
+          cp "$lib" "dist/${{ matrix.lib }}"
+          cd dist
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            7z a "semsys-csound7-${{ matrix.name }}.zip" "${{ matrix.lib }}"
+          else
+            zip -j "semsys-csound7-${{ matrix.name }}.zip" "${{ matrix.lib }}"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: semsys-csound7-${{ matrix.name }}
+          path: dist/semsys-csound7-${{ matrix.name }}.zip
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/semsys-csound7-${{ matrix.name }}.zip

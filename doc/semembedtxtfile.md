@@ -1,0 +1,85 @@
+# semembedtxtfile
+
+## Abstract
+
+Embed the text contents of a file at init, returning one embedding per chunk.
+
+## Description
+
+`semembedtxtfile` reads the whole file at `path` and embeds it with the end-to-end model
+(the model tokenizes internally), returning a **2D array `[nchunks, ldim]`**. It is the
+file counterpart of the i-rate [semembedtxt](semembedtxt.md): text longer than the model
+window is split into `<=` window token chunks, producing one mean-pooled embedding **row per chunk**.
+A short file yields a single row.
+The whole file is treated as one block of text (paragraph/blank-line structure is not
+significant); chunking is by token window.
+
+## Syntax
+
+```csound
+chunks:i[][] = semembedtxtfile(handle:i, path:S)
+```
+
+## Arguments
+
+* `handle:i`: handle returned by [semload](semload.md).
+* `path:S`: path to a UTF-8 text file.
+
+## Output
+
+* `chunks:i[][]`: `[nchunks, ldim]` — one mean-pooled embedding per chunk.
+
+## Execution Time
+
+* Init
+
+## Examples
+
+```csound
+<CsoundSynthesizer>
+<CsOptions>
+</CsOptions>
+<CsInstruments>
+
+; -----------------------------------------------------------------------------
+; semembedtxtfile.csd
+;
+; semembedtxtfile reads a whole text file and embeds it once at init, returning a
+; 2D array [nchunks, ldim]: text longer than the model window is split into token
+; chunks, one mean-pooled embedding row per chunk. It is the file counterpart of
+; the i-rate semembedtxt.
+; -----------------------------------------------------------------------------
+
+sr = 44100
+ksmps = 32
+nchnls = 2
+0dbfs = 1
+
+#define MODEL_DIR # "path/to/text_model_dir" #
+
+handle@global:i = semload(256, $MODEL_DIR)
+
+instr 1
+    emb:i[][] = semembedtxtfile(handle, "corpus.txt")
+    prints("chunks = %d | dim = %d\n", lenarray(emb), lenarray(emb, 2))
+    printarray(emb)
+    turnoff
+endin
+
+</CsInstruments>
+<CsScore>
+i 1 0 0.1
+</CsScore>
+</CsoundSynthesizer>
+```
+
+## See also
+
+* [semload](semload.md)
+* [semdim](semdim.md)
+* [semembedtxt](semembedtxt.md)
+* [semspacequerytxt](semspacequerytxt.md)
+
+## Credits
+
+Pasquale Mainolfi, 2026
