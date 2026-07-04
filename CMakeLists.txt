@@ -109,6 +109,8 @@ function(make_plugin pluginlib srcs)
         add_library(${pluginlib} MODULE ${srcs})
     endif()
     target_include_directories(${pluginlib} PRIVATE ${CSOUND_INCLUDE_DIR} ${CSOUND_EXTRA_INCLUDE_DIRS})
+    # dladdr()/Dl_info are behind _GNU_SOURCE on glibc (available by default on macOS/BSD).
+    target_compile_definitions(${pluginlib} PRIVATE $<$<PLATFORM_ID:Linux>:_GNU_SOURCE>)
     set_property(TARGET ${pluginlib} PROPERTY C_STANDARD 99)
     set_target_properties(${pluginlib} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${BUILD_PLUGINS_DIR}
