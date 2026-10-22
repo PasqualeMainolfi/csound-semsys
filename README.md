@@ -442,6 +442,36 @@ macOS, `~/.local/share/risset/assets/semsys/` on Linux and
 
 ## Version history
 
+### 1.0.1
+
+- Targets the stable **Csound 7.0.0**: built against the 7.0.0 plugin headers and
+  tested with the 7.0.0 runtime. `1.0.0` was built against `7.0.0-beta.17`, whose
+  plugin ABI differs.
+- Array element variables are created through the 7.0.0
+  `array_element_create_variable()` helper (new `createVariable` signature); the
+  sources use the Csound 7 type name `cs_float` instead of `MYFLT`.
+- Release archives now include the official **ONNX Runtime 1.31.0** and
+  **onnxruntime-extensions 0.14.0** runtime libraries with their license notices.
+  risset installs them as assets, so `risset install semsys` gives a working plugin
+  (macOS x86_64 gets onnxruntime-extensions only: there is no official Intel build of
+  ONNX Runtime).
+- Runtime libraries are also looked up in the risset assets folder
+  (`<risset data dir>/assets/semsys/`), after the plugin's own directory.
+- `cmake --install` copies the real library files instead of package-manager symlinks
+  (a Homebrew `libonnxruntime` used to be installed as a dangling link), and a runtime
+  library that configure cannot find is reported with a `CMake Warning`.
+- CMake finds the generated `version.h` in the Csound 7.0.0 source layout
+  (`platform/android/CsoundAndroid/jni`); the plugin compiles as C11 without warnings
+  against the 7.0.0 headers.
+- macOS binaries are universal (arm64 + x86_64) with a macOS 12.0 deployment target;
+  Linux binaries are built on Ubuntu 22.04.
+- Added `scripts/fetch_onnx_runtime.sh`; `scripts/package.sh` produces the same archive
+  as the release workflow.
+- Examples use placeholder model paths; audio media are no longer in the repository and
+  each example lists the files it expects.
+- Risset manifest: `opcodes` lists opcode names only (no type-suffixed variants); new
+  per-platform `assets` entries for the runtime libraries.
+
 ### 1.0.0
 
 - Initial release.
