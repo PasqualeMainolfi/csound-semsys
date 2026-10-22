@@ -37,8 +37,9 @@ set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 option(USE_DOUBLE "Use doubles for audio calculations" ON)
+# B64BIT is not passed here: sysdep.h defines it on every 64-bit target.
 if(USE_DOUBLE)
-    add_definitions(-DUSE_DOUBLE -DB64BIT)
+    add_definitions(-DUSE_DOUBLE)
 endif()
 
 add_definitions(-DCSOUNDAPI7 -DCS_API_VERSION_MAJOR=7)
@@ -68,14 +69,15 @@ message(STATUS "semsys: Csound headers at ${CSOUND_INCLUDE_DIR}")
 
 # csound.h #includes a *generated* version.h. A proper Csound install ships it in
 # the include dir; a raw source checkout generates it elsewhere (e.g. under
-# Android/CsoundAndroid/jni). Make sure it is reachable, else the build fails with
+# platform/android/CsoundAndroid/jni, Android/CsoundAndroid/jni before 7.0.0).
+# Make sure it is reachable, else the build fails with
 # "version.h file not found".
 set(CSOUND_EXTRA_INCLUDE_DIRS "" CACHE STRING
     "Extra Csound include dirs (semicolon-separated), e.g. the dir holding a generated version.h")
 if(NOT EXISTS "${CSOUND_INCLUDE_DIR}/version.h")
     find_file(CSOUND_VERSION_H version.h
         PATHS "${CSOUND_INCLUDE_DIR}/.."
-        PATH_SUFFIXES Android/CsoundAndroid/jni
+        PATH_SUFFIXES platform/android/CsoundAndroid/jni Android/CsoundAndroid/jni
         NO_DEFAULT_PATH)
     if(CSOUND_VERSION_H)
         get_filename_component(_vdir "${CSOUND_VERSION_H}" DIRECTORY)
@@ -111,7 +113,8 @@ function(make_plugin pluginlib srcs)
     target_include_directories(${pluginlib} PRIVATE ${CSOUND_INCLUDE_DIR} ${CSOUND_EXTRA_INCLUDE_DIRS})
     # dladdr()/Dl_info are behind _GNU_SOURCE on glibc (available by default on macOS/BSD).
     target_compile_definitions(${pluginlib} PRIVATE $<$<PLATFORM_ID:Linux>:_GNU_SOURCE>)
-    set_property(TARGET ${pluginlib} PROPERTY C_STANDARD 99)
+    # The Csound 7 headers repeat typedefs, which is only valid from C11 on.
+    set_property(TARGET ${pluginlib} PROPERTY C_STANDARD 11)
     set_target_properties(${pluginlib} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${BUILD_PLUGINS_DIR}
         LIBRARY_OUTPUT_DIRECTORY ${BUILD_PLUGINS_DIR})

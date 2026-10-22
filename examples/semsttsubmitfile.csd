@@ -14,6 +14,10 @@
 ;
 ; Run in real time (-odac) so the poll waits in wall-clock while the background
 ; worker transcribes. No sound is produced; the result is printed.
+;
+; MEDIA: audio files are NOT included in the repository (.wav files are
+; git-ignored). Put your own next to this .csd, or edit the paths below:
+;   spoken.wav  a short speech recording (PCM16 WAV)
 ; -----------------------------------------------------------------------------
 
 sr = 44100
@@ -22,7 +26,7 @@ nchnls = 1
 0dbfs = 1
 
 ; end-to-end STT model dir: must contain model.onnx; keep model.onnx.data there too if present
-#define STT_DIR # "/Users/pm/AcaHub/Coding/csound-repo/semsys-models/whisper-core/model_e2e" #
+#define STT_DIR # "path/to/model_e2e" #
 #define AUDIO   # "spoken.wav" #
 
 faudio@global:i = ftgen(0, 0, 0, 1, $AUDIO, 0, 0, 0)

@@ -12,6 +12,11 @@
 ; an additive sine bank (each coordinate = amplitude of a partial at a fixed
 ; center frequency), and a spoken query (STT) -> filter impulse response -> ftconv.
 ; The query's MEANING shapes the timbre.
+;
+; MEDIA: audio files are NOT included in the repository (.wav files are
+; git-ignored). Put your own next to this .csd, or edit the paths below:
+;   spoken.wav  a short speech recording (PCM16 WAV)
+;   vox.wav     any sound to play back
 ; -----------------------------------------------------------------------------
 
 sr = 44100
@@ -19,8 +24,8 @@ ksmps = 2
 nchnls = 2
 0dbfs = 1
 
-#define MODEL_DIR # "/Users/pm/AcaHub/Coding/csound-repo/semsys-models/all-MiniLM-L6-v2/all-MiniLM-L6-v2-e2e" #
-#define STT_DIR # "/Users/pm/AcaHub/Coding/csound-repo/semsys-models/whisper-core/model_e2e" # ; end-to-end STT model dir: must contain model.onnx; keep model.onnx.data there too if present
+#define MODEL_DIR # "path/to/text_model_dir" #
+#define STT_DIR # "path/to/model_e2e" # ; end-to-end STT model dir: must contain model.onnx; keep model.onnx.data there too if present
 #define AUDIO # "spoken.wav" #
 
 #define EPS # pow(10, -12) #

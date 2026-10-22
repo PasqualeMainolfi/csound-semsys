@@ -15,6 +15,10 @@ compile_commands.json
 # macOS
 .DS_Store
 
+# audio media: not distributed, supply your own (see README)
+*.wav
+*.WAV
+
 # utest artifacts
 utest/espc/*
 !utest/espc/.gitkeep

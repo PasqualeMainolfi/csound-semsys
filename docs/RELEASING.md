@@ -13,13 +13,23 @@ risset index.
 
 ## 2. Build the binaries
 
-Each `risset.json` binary entry names a zip and the file inside it (`extractpath`):
+Each `risset.json` binary entry names a zip and the plugin inside it (`extractpath`).
+The same zip also holds the ONNX runtime libraries, which the `assets` entries extract
+into risset's assets folder:
 
-| platform            | zip                                   | extractpath      |
-|---------------------|---------------------------------------|------------------|
-| linux-x86_64        | `semsys-csound7-linux.zip`            | `libsemsys.so`   |
-| windows-x86_64      | `semsys-csound7-windows.zip`          | `semsys.dll`     |
-| macos-x86_64/arm64  | `semsys-csound7-macos-universal.zip`  | `libsemsys.dylib`|
+| platform        | zip                                   | binary extractpath | assets extractpath |
+|-----------------|---------------------------------------|--------------------|--------------------|
+| linux-x86_64    | `semsys-csound7-linux.zip`            | `libsemsys.so`     | `libonnxruntime.so;libortextensions.so` |
+| windows-x86_64  | `semsys-csound7-windows.zip`          | `semsys.dll`       | `onnxruntime.dll;ortextensions.dll` |
+| macos-arm64     | `semsys-csound7-macos-universal.zip`  | `libsemsys.dylib`  | `libonnxruntime.dylib;libortextensions.dylib` |
+| macos-x86_64    | `semsys-csound7-macos-universal.zip`  | `libsemsys.dylib`  | `libortextensions.dylib` (no official x86_64 ONNX Runtime) |
+
+The runtime libraries are fetched by `scripts/fetch_onnx_runtime.sh` (pinned
+`ORT_VERSION` / `ORTEXT_VERSION`) from the official ONNX Runtime GitHub release and the
+`Microsoft.ML.OnnxRuntime.Extensions` NuGet package.
+
+Unlike `binaries`, risset does **not** expand `${version}` in `assets` URLs: update the
+`v<version>` in each asset URL by hand on every release.
 
 Two ways to produce them:
 

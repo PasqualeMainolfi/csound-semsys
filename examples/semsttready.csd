@@ -10,6 +10,10 @@
 ; semsttready is a cheap non-blocking k-rate poll: it returns 1 when a finished
 ; transcription is waiting in the result queue. Use it to gate semsttresult.
 ; Run in real time (-o dac) so the poll waits in wall-clock for the worker.
+;
+; MEDIA: audio files are NOT included in the repository (.wav files are
+; git-ignored). Put your own next to this .csd, or edit the paths below:
+;   spoken.wav  a short speech recording (PCM16 WAV)
 ; -----------------------------------------------------------------------------
 
 sr = 44100
@@ -17,7 +21,7 @@ ksmps = 128
 nchnls = 1
 0dbfs = 1
 
-#define STT_DIR # "/Users/pm/AcaHub/Coding/csound-repo/semsys-models/whisper-core/model_e2e" #
+#define STT_DIR # "path/to/model_e2e" #
 #define AUDIO   # "spoken.wav" #
 
 h@global:i = semsttload($STT_DIR, 448, 64)

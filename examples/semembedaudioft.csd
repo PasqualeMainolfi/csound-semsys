@@ -22,6 +22,10 @@
 ; The model works at 32 kHz internally and has global time pooling, so it accepts
 ; any length and imposes no sequence cap -> load with maxlen = -1 ("full"). semsys
 ; resamples/downmixes to the model's rate in C before inference.
+;
+; MEDIA: audio files are NOT included in the repository (.wav files are
+; git-ignored). Put your own next to this .csd, or edit the paths below:
+;   mallets_on_piano.wav  any sound to embed/query (PCM16 WAV)
 ; -----------------------------------------------------------------------------
 
 sr = 44100
@@ -29,7 +33,7 @@ ksmps = 32
 nchnls = 2
 0dbfs = 1
 
-#define AUDIO_EMB_DIR # "/Users/pm/AcaHub/Coding/csound-repo/semsys-models/PANNs_CNN14_ONNX" #
+#define AUDIO_EMB_DIR # "path/to/audio_model_dir" #
 #define AUDIO_TEST_FILE # "mallets_on_piano.wav" #
 
 audio_table@global:i = ftgen(0, 0, 0, 1, $AUDIO_TEST_FILE, 0, 0, 0)

@@ -4,7 +4,10 @@ name: release
 # release when a v* tag is pushed. Only the Csound plugin *headers* are needed at
 # build time (onnxruntime is loaded at runtime via dlopen), so we just clone the
 # Csound source for its include/ dir -- no Csound build, no extra deps. The
-# generated version.h is picked up from Android/CsoundAndroid/jni by CMakeLists.txt.
+# official onnxruntime / onnxruntime-extensions runtime libraries are then fetched
+# by scripts/fetch_onnx_runtime.sh and shipped in the same archive. The
+# generated version.h is picked up from platform/android/CsoundAndroid/jni by
+# CMakeLists.txt.
 
 on:
   push:
@@ -19,7 +22,7 @@ permissions:
 env:
   # Csound source ref to take headers from. Pinned to the Csound 7 tag whose
   # headers this plugin was built and verified against (also the runtime Csound).
-  CSOUND_REF: 7.0.0-beta.17
+  CSOUND_REF: 7.0.0
 
 jobs:
   build:
@@ -27,7 +30,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest,  name: linux,            lib: libsemsys.so,    arch: "" }
+          # ubuntu-22.04 (glibc 2.35) instead of -latest so the plugin also runs on
+          # older distros; the bundled libortextensions already needs glibc 2.34.
+          - { os: ubuntu-22.04,   name: linux,            lib: libsemsys.so,    arch: "" }
           - { os: macos-latest,   name: macos-universal,  lib: libsemsys.dylib, arch: "arm64;x86_64" }
           - { os: windows-latest, name: windows,          lib: semsys.dll,      arch: "" }
     runs-on: ${{ matrix.os }}
@@ -47,25 +52,47 @@ jobs:
           args=(-S . -B build -DCMAKE_BUILD_TYPE=Release
                 -DCSOUND_INCLUDE_DIR="${GITHUB_WORKSPACE}/csound-src/include"
                 -DCMAKE_POLICY_VERSION_MINIMUM=3.5)
-          [ -n "${{ matrix.arch }}" ] && args+=(-DCMAKE_OSX_ARCHITECTURES="${{ matrix.arch }}")
+          # Without an explicit target the macOS binary requires the runner's
+          # macOS version. 12.0 matches the minimum of the Csound 7 framework.
+          [ -n "${{ matrix.arch }}" ] && args+=(-DCMAKE_OSX_ARCHITECTURES="${{ matrix.arch }}"
+                                                -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0)
           cmake "${args[@]}"
 
       - name: Build
         run: cmake --build build --config Release --target semsys --parallel
 
+      # The archive holds the plugin plus the runtime libraries it loads (the
+      # `assets` entries of risset.json extract those) and their license notices.
       - name: Package
         shell: bash
         run: |
-          mkdir -p dist
+          set -e
+          stage=dist/stage
+          mkdir -p "$stage"
           # MSVC drops the artifact in build/Release/, single-config in build/.
           lib=$(find build -name '${{ matrix.lib }}' | head -1)
-          cp "$lib" "dist/${{ matrix.lib }}"
-          cd dist
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            7z a "semsys-csound7-${{ matrix.name }}.zip" "${{ matrix.lib }}"
-          else
-            zip -j "semsys-csound7-${{ matrix.name }}.zip" "${{ matrix.lib }}"
-          fi
+          cp "$lib" "$stage/${{ matrix.lib }}"
+          bash scripts/fetch_onnx_runtime.sh "${{ matrix.name }}" "$stage"
+          cd "$stage"
+          cmake -E tar cf "../semsys-csound7-${{ matrix.name }}.zip" --format=zip -- *
+
+      # Guards an archive whose risset.json extractpath entries (plugin + runtime
+      # libraries) are not inside it: risset would fail to install the assets.
+      - name: Verify archive contents
+        shell: bash
+        run: |
+          set -e
+          zip="dist/semsys-csound7-${{ matrix.name }}.zip"
+          case "${{ runner.os }}" in
+            Windows) libs="onnxruntime.dll ortextensions.dll" ;;
+            macOS)   libs="libonnxruntime.dylib libortextensions.dylib" ;;
+            *)       libs="libonnxruntime.so libortextensions.so" ;;
+          esac
+          cmake -E tar tf "$zip" > listing.txt
+          cat listing.txt
+          for f in "${{ matrix.lib }}" $libs; do
+            grep -qx "$f" listing.txt || { echo "missing from archive: $f"; exit 1; }
+          done
 
       - uses: actions/upload-artifact@v4
         with:

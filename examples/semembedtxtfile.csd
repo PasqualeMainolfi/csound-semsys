@@ -17,7 +17,7 @@ ksmps = 32
 nchnls = 2
 0dbfs = 1
 
-#define MODEL_DIR # "/Users/pm/AcaHub/Coding/csound-repo/semsys-models/all-MiniLM-L6-v2/all-MiniLM-L6-v2-e2e" #
+#define MODEL_DIR # "path/to/text_model_dir" #
 
 handle@global:i = semload(256, $MODEL_DIR)
 

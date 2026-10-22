@@ -10,6 +10,10 @@
 ; semsttsubmitft transcribes the samples held in a function table (engine sr,
 ; mono). The whole table (flen samples) is used and segmented automatically if it
 ; is longer than the model window. Here: load a WAV into a mono table and submit it.
+;
+; MEDIA: audio files are NOT included in the repository (.wav files are
+; git-ignored). Put your own next to this .csd, or edit the paths below:
+;   spoken.wav  a short speech recording (PCM16 WAV)
 ; -----------------------------------------------------------------------------
 
 sr = 44100
@@ -17,7 +21,7 @@ ksmps = 128
 nchnls = 1
 0dbfs = 1
 
-#define STT_DIR # "/Users/pm/AcaHub/Coding/csound-repo/semsys-models/whisper-core/model_e2e" #
+#define STT_DIR # "path/to/model_e2e" #
 #define AUDIO   # "spoken.wav" #
 
 faudio@global:i = ftgen(0, 0, 0, 1, $AUDIO, 0, 0, 1)   ; mono table (GEN01, channel 1)

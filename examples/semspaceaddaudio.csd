@@ -10,6 +10,10 @@
 ; the per-window vector(s) to an in-memory space (RAM-only; use semspacesave to
 ; persist). Here: add a sound, then query the space with the same sound (its
 ; self-match score should be close to 1).
+;
+; MEDIA: audio files are NOT included in the repository (.wav files are
+; git-ignored). Put your own next to this .csd, or edit the paths below:
+;   mallets_on_piano.wav  any sound to embed/query (PCM16 WAV)
 ; -----------------------------------------------------------------------------
 
 sr = 44100
@@ -17,7 +21,7 @@ ksmps = 32
 nchnls = 2
 0dbfs = 1
 
-#define AUDIO_MODEL # "/Users/pm/AcaHub/Coding/csound-repo/semsys-models/PANNs_CNN14_ONNX" #
+#define AUDIO_MODEL # "path/to/audio_model_dir" #
 #define WAV # "mallets_on_piano.wav" #
 
 a_handle@global:i = semload(-1, $AUDIO_MODEL)   ; audio model, no sequence cap

@@ -57,12 +57,12 @@
 
 #define INITIAL_VCAPACITY 100
 
-#define CTX_TO_FLT(ctx) (MYFLT) (uintptr_t) (ctx)
+#define CTX_TO_FLT(ctx) (cs_float) (uintptr_t) (ctx)
 #define FLT_TO_CTX(p) (SEMSYS *) (uintptr_t) (*p->handle)
-#define SPC_TO_FLT(spc) (MYFLT)(uintptr_t) (spc)
+#define SPC_TO_FLT(spc) (cs_float)(uintptr_t) (spc)
 #define FLT_TO_SPC(p) (SEMSYS_SPACE *) (uintptr_t) (*p->s_handle)
 #define FLT_TO_STT(stt) (SEMSYS_STT *) (uintptr_t) (*p->handle)
-#define STT_TO_FLT(stt) (MYFLT) (uintptr_t) (stt)
+#define STT_TO_FLT(stt) (cs_float) (uintptr_t) (stt)
 #define CACHE_INDEX(spc, ndx) sizeof(CACHE_HEADER) + (ndx) * (spc)->ldim * sizeof(float)
 
 #define TOKWIN(maxlen_seq) (int) ((maxlen_seq) * 0.6) > 1 ? (int) ((maxlen_seq) * 0.6) : 1
@@ -193,27 +193,27 @@ typedef struct {
 typedef struct {
     OPDS h;
     // outputs
-    MYFLT *handle;
+    cs_float *handle;
     // inputs
-    MYFLT *maxlen_seq; // depends on the onnx model (see max position embeedding for embedding model and truncation for tokenizer)
+    cs_float *maxlen_seq; // depends on the onnx model (see max position embeedding for embedding model and truncation for tokenizer)
     STRINGDAT *model_dir;
 } SEM_INIT;
 
 typedef struct {
     OPDS h;
     //output
-    MYFLT *out_dim;
+    cs_float *out_dim;
     //input
-    MYFLT *handle;
+    cs_float *handle;
 } SEM_DIM;
 
 typedef struct {
     OPDS h;
     // outputs
     ARRAYDAT *pool_embed;
-    MYFLT *gate;
+    cs_float *gate;
     //inputs
-    MYFLT *handle;
+    cs_float *handle;
     STRINGDAT *text;
     // private state
     SEMSYS *ctx;
@@ -226,7 +226,7 @@ typedef struct {
     // outputs
     ARRAYDAT *pool_embed;
     // inputs
-    MYFLT *handle;
+    cs_float *handle;
     STRINGDAT *text;
     // private state
     SEMSYS *ctx;
@@ -237,7 +237,7 @@ typedef struct {
     // outputs
     ARRAYDAT *pool_embed;
     // inputs
-    MYFLT *handle;
+    cs_float *handle;
     STRINGDAT *file_path;
     // private state
     SEMSYS *ctx;
@@ -247,14 +247,14 @@ typedef struct {
     OPDS h;
     // outputs
     ARRAYDAT *pool_embed; // 1D [ldim], refreshed when a fresh embedding is ready
-    MYFLT *gate;          // 1 on the k-pass a fresh embedding is published, else 0
+    cs_float *gate;          // 1 on the k-pass a fresh embedding is published, else 0
     // inputs
-    MYFLT *handle;
-    MYFLT *asig;          // a-rate audio in (engine sr, mono)
-    MYFLT *iwindow;       // window length in seconds (optional, default 10, min 1)
+    cs_float *handle;
+    cs_float *asig;          // a-rate audio in (engine sr, mono)
+    cs_float *iwindow;       // window length in seconds (optional, default 10, min 1)
     // private state
     SEMSYS *ctx;
-    AUXCH buf;            // MYFLT engine-sr accumulation (perf-thread only)
+    AUXCH buf;            // cs_float engine-sr accumulation (perf-thread only)
     size_t target;       // window length in samples (engine sr)
     size_t len;          // samples buffered so far
     uint32_t esr;        // engine sr
@@ -265,10 +265,10 @@ typedef struct {
     void *job_lock;      // wakes the worker
     volatile int stop;
     int worker_done;
-    MYFLT *job_buf;      // handoff window (malloc, target samples)
+    cs_float *job_buf;      // handoff window (malloc, target samples)
     size_t job_len;
     int job_pending;     // 1 = a window is waiting for the worker (latest wins)
-    MYFLT *result;       // last embedding (malloc, ldim)
+    cs_float *result;       // last embedding (malloc, ldim)
     int result_ready;    // 1 = fresh embedding to publish
 } SEM_EMBED_AUDIO;
 
@@ -277,8 +277,8 @@ typedef struct {
     // outputs
     ARRAYDAT *pool_embed; // 2D [nchunks, ldim]
     // inputs
-    MYFLT *handle;
-    MYFLT *func_number;
+    cs_float *handle;
+    cs_float *func_number;
     // private state
     SEMSYS *ctx;
 } SEM_EMBED_AUDIO_FUNC_I;
@@ -288,7 +288,7 @@ typedef struct {
     // outputs
     ARRAYDAT *pool_embed; // 2D [nchunks, ldim]
     // inputs
-    MYFLT *handle;
+    cs_float *handle;
     STRINGDAT *file_path;
     // private state
     SEMSYS *ctx;
@@ -329,18 +329,18 @@ typedef struct {
 typedef struct {
     OPDS h;
     // outputs
-    MYFLT *s_handle; // space handle
+    cs_float *s_handle; // space handle
     // inputs
-    MYFLT *handle; // sem_emb_handle
+    cs_float *handle; // sem_emb_handle
     STRINGDAT *cache_file; // optional: a .espc file or a directory of .espc files to load into RAM
 } SEM_SPACE_INIT;
 
 typedef struct {
     OPDS h;
     // outputs
-    MYFLT *s_handle; // space handle
+    cs_float *s_handle; // space handle
     // inputs
-    MYFLT *handle; // sem_emb_handle
+    cs_float *handle; // sem_emb_handle
     ARRAYDAT *paths; // S[] of .espc file paths to merge into RAM
 } SEM_SPACE_INIT_VS;
 
@@ -348,39 +348,39 @@ typedef struct {
 typedef struct {
     OPDS h;
     // inputs
-    MYFLT *handle; // sem_emb_handle
+    cs_float *handle; // sem_emb_handle
     STRINGDAT *file_name;
     STRINGDAT *source;
     // private
-    MYFLT *pmb;
+    cs_float *pmb;
     float *pool;
 } SEM_SPACE_BUILD;
 
 typedef struct {
     OPDS h;
     // inputs
-    MYFLT *s_handle;   // space handle
-    MYFLT *handle;     // model handle (text for addtxt, audio for addaudio); chosen per-op
+    cs_float *s_handle;   // space handle
+    cs_float *handle;     // model handle (text for addtxt, audio for addaudio); chosen per-op
     STRINGDAT *sentence; // text (addtxt) or audio file path (addaudio)
-    MYFLT *ktrig; // k-form only: add on rising edge
+    cs_float *ktrig; // k-form only: add on rising edge
     // private state
     SEMSYS_SPACE *spc;
     AUXCH last_text; // cached last-added text/path; self-gate skips re-embedding unchanged input
     AUXCH vec_scratch; // float[ldim] scratch for chunk_and_embed (text form)
     SEMSYS *ctx;     // resolved from *handle at init
     AUXCH pmb;
-    MYFLT prev_trig;
+    cs_float prev_trig;
 } SEM_SPACE_ADD;
 
 typedef struct {
     OPDS h;
     // inputs
-    MYFLT *s_handle; // space handle
+    cs_float *s_handle; // space handle
     STRINGDAT *fname;
-    MYFLT *ktrig; // k-form only: save on rising edge
+    cs_float *ktrig; // k-form only: save on rising edge
     // private state
     SEMSYS_SPACE *spc;
-    MYFLT prev_trig;
+    cs_float prev_trig;
 } SEM_SPACE_SAVE;
 
 typedef struct {
@@ -407,11 +407,11 @@ typedef struct {
     // job (perf -> worker), latest-wins
     int job_pending;
     char *job_str;       // text/path (kinds 0/1), malloc'd
-    MYFLT *job_pcm;      // pcm snapshot (kind 2), malloc'd
+    cs_float *job_pcm;      // pcm snapshot (kind 2), malloc'd
     size_t job_n;
     uint32_t job_sr;
     // worker-private scratch (alloc at init)
-    MYFLT *pmb;          // ldim
+    cs_float *pmb;          // ldim
     float *pool;         // ldim
     float *qvec;         // ldim centroid
     Score *mheap;        // top_k
@@ -430,10 +430,10 @@ typedef struct {
     ARRAYDAT *neighs; // need to return also string
     ARRAYDAT *scores;
     // inputs
-    MYFLT *s_handle;   // space handle
-    MYFLT *handle;     // model handle (text for querytxt, audio for queryaudio); chosen per-op
+    cs_float *s_handle;   // space handle
+    cs_float *handle;     // model handle (text for querytxt, audio for queryaudio); chosen per-op
     STRINGDAT *query;  // query text (querytxt) or audio file path (queryaudio)
-    MYFLT *top_k;
+    cs_float *top_k;
     // private
     SEMSYS_SPACE *spc;
     int top_k_neighs;
@@ -450,12 +450,12 @@ typedef struct {
     // outputs
     ARRAYDAT *neighs;
     ARRAYDAT *scores;
-    MYFLT *gate;      // 1 on the k-pass a fresh query result is published, else 0
+    cs_float *gate;      // 1 on the k-pass a fresh query result is published, else 0
     // inputs
-    MYFLT *s_handle;
-    MYFLT *handle;
+    cs_float *s_handle;
+    cs_float *handle;
     STRINGDAT *query;
-    MYFLT *top_k;
+    cs_float *top_k;
     // private
     SEMSYS_SPACE *spc;
     int top_k_neighs;
@@ -475,11 +475,11 @@ typedef struct {
     ARRAYDAT *neighs;
     ARRAYDAT *scores;
     // inputs
-    MYFLT *s_handle;
-    MYFLT *handle;    // audio model handle
-    MYFLT *ftable;    // ftable of mono audio samples (engine sr)
-    MYFLT *top_k;
-    MYFLT *iminsec;   // optional: min duration (s) to run a query; 0 = no minimum
+    cs_float *s_handle;
+    cs_float *handle;    // audio model handle
+    cs_float *ftable;    // ftable of mono audio samples (engine sr)
+    cs_float *top_k;
+    cs_float *iminsec;   // optional: min duration (s) to run a query; 0 = no minimum
     // private
     SEMSYS_SPACE *spc;
     int top_k_neighs;
@@ -495,38 +495,38 @@ typedef struct {
     // outputs
     ARRAYDAT *neighs;
     ARRAYDAT *scores;
-    MYFLT *gate;      // 1 on the k-pass a fresh query result is published, else 0
+    cs_float *gate;      // 1 on the k-pass a fresh query result is published, else 0
     // inputs
-    MYFLT *s_handle;
-    MYFLT *handle;    // audio model handle
-    MYFLT *ftable;
-    MYFLT *top_k;
-    MYFLT *ktrig;     // query on rising edge
-    MYFLT *iminsec;   // optional: min duration (s) to run a query; 0 = no minimum
+    cs_float *s_handle;
+    cs_float *handle;    // audio model handle
+    cs_float *ftable;
+    cs_float *top_k;
+    cs_float *ktrig;     // query on rising edge
+    cs_float *iminsec;   // optional: min duration (s) to run a query; 0 = no minimum
     // private
     SEMSYS_SPACE *spc;
     int top_k_neighs;
     AUXCH query_buf;
     SEMSYS *ctx;
     AUXCH mheap;
-    MYFLT prev_trig;
+    cs_float prev_trig;
     QUERY_ASYNC async;
 } SEM_SPACE_QUERY_FT_K;
 
 typedef struct {
     OPDS h;
     // inputs
-    MYFLT *s_handle; // space handle
-    MYFLT *trig;
+    cs_float *s_handle; // space handle
+    cs_float *trig;
     // private
     SEMSYS_SPACE *spc;
-    MYFLT last_trig;
+    cs_float last_trig;
 } SEM_SPACE_CLEAR_K;
 
 typedef struct {
     OPDS h;
     // inputs
-    MYFLT *s_handle; // space handle
+    cs_float *s_handle; // space handle
 } SEM_SPACE_CLEAR_I;
 
 // SEMSYS STT
@@ -573,32 +573,32 @@ typedef struct {
 typedef struct {
     OPDS h;
     // outputs
-    MYFLT *handle;
+    cs_float *handle;
     // inputs
     STRINGDAT *model_dir;
-    MYFLT *max_length;
-    MYFLT *queue_depth;   // FIFO capacity (jobs + results); 0 -> default
+    cs_float *max_length;
+    cs_float *queue_depth;   // FIFO capacity (jobs + results); 0 -> default
 } SEM_STT_INIT;
 
 typedef struct {
     OPDS h;
     // inputs
-    MYFLT *handle;
+    cs_float *handle;
     STRINGDAT *audio_speech_fpath;
 } SEM_STT_SUBMIT_AUDIO_FILE;
 
 typedef struct {
     OPDS h;
     // inputs
-    MYFLT *handle;
+    cs_float *handle;
     ARRAYDAT *audio_speech_arr;
 } SEM_STT_SUBMIT_AUDIO_ARRAY;
 
 typedef struct {
     OPDS h;
     // inputs
-    MYFLT *handle;
-    MYFLT *ftable_num;
+    cs_float *handle;
+    cs_float *ftable_num;
 } SEM_STT_SUBMIT_AUDIO_FUNC;
 
 // live a-rate capture: accumulate asig across k-blocks, submit a window every imaxdur
@@ -606,35 +606,35 @@ typedef struct {
 typedef struct {
     OPDS h;
     // inputs
-    MYFLT *handle;
-    MYFLT *asig;      // a-rate audio in
-    MYFLT *imaxdur;   // window length, seconds (buffer size; auto-submit when full)
-    MYFLT *ktrig;     // optional: also submit on rising edge (default 0 -> auto only)
+    cs_float *handle;
+    cs_float *asig;      // a-rate audio in
+    cs_float *imaxdur;   // window length, seconds (buffer size; auto-submit when full)
+    cs_float *ktrig;     // optional: also submit on rising edge (default 0 -> auto only)
     // state
     SEMSYS_STT *ctx;
-    AUXCH buf;         // accumulation buffer (MYFLT, engine sr, mono)
+    AUXCH buf;         // accumulation buffer (cs_float, engine sr, mono)
     size_t target;     // preferred window length in samples
     size_t cap;        // hard capacity in samples
     size_t next_check; // next automatic VAD boundary check
     size_t len;        // samples written so far
-    MYFLT prev_trig;
+    cs_float prev_trig;
 } SEM_STT_SUBMIT_LIVE;
 
 typedef struct {
     OPDS h;
     // outputs
-    MYFLT *is_ready; // bool: 1 when a fresh transcription is ready
+    cs_float *is_ready; // bool: 1 when a fresh transcription is ready
     // inputs
-    MYFLT *handle;
+    cs_float *handle;
 } SEM_STT_READY;
 
 typedef struct {
     OPDS h;
     // outputs
     STRINGDAT *result;
-    MYFLT *text_length;
+    cs_float *text_length;
     // inputs
-    MYFLT *handle;
+    cs_float *handle;
 } SEM_STT_RESULT;
 
 typedef struct {

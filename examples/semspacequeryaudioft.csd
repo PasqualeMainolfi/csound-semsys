@@ -23,6 +23,10 @@
 ;
 ; Audio files must be PCM16 WAV. Model = an end-to-end audio embedder (e.g. PANNs
 ; CNN14); -1 = no sequence cap.
+;
+; MEDIA: audio files are NOT included in the repository (.wav files are
+; git-ignored). Put your own next to this .csd, or edit the paths below:
+;   audio_space_wav/  a folder of sounds to build the space from (PCM16 WAV)
 ; -----------------------------------------------------------------------------
 
 sr = 44100
@@ -30,7 +34,7 @@ ksmps = 32
 nchnls = 2
 0dbfs = 1
 
-#define AUDIO_MODEL # "/Users/pm/AcaHub/Coding/csound-repo/semsys-models/PANNs_CNN14_ONNX" #
+#define AUDIO_MODEL # "path/to/audio_model_dir" #
 #define AUDIO_DIR # "audio_space_wav" #
 #define TLEN # sr * 3 #
 

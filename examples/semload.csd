@@ -19,8 +19,8 @@ ksmps = 32
 nchnls = 2
 0dbfs = 1
 
-#define TEXT_DIR  # "/Users/pm/AcaHub/Coding/csound-repo/semsys-models/all-MiniLM-L6-v2/all-MiniLM-L6-v2-e2e" #
-#define AUDIO_DIR # "/Users/pm/AcaHub/Coding/csound-repo/semsys-models/PANNs_CNN14_ONNX" #
+#define TEXT_DIR  # "path/to/text_model_dir" #
+#define AUDIO_DIR # "path/to/audio_model_dir" #
 
 h_txt@global:i = semload(256, $TEXT_DIR)   ; text model
 h_aud@global:i = semload(-1, $AUDIO_DIR)   ; audio model, no sequence cap

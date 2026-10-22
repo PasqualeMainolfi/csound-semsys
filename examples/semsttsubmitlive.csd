@@ -18,6 +18,10 @@
 ; Needs both an end-to-end STT model and a sentence-embedding model, plus a
 ; corpus.txt to build the space from. Transcription runs on a worker thread, so
 ; the audio never stalls.
+;
+; MEDIA: audio files are NOT included in the repository (.wav files are
+; git-ignored). Put your own next to this .csd, or edit the paths below:
+;   spoken.wav  a short speech recording (PCM16 WAV)
 ; -----------------------------------------------------------------------------
 
 sr = 44100
@@ -25,8 +29,8 @@ ksmps = 1
 nchnls = 2
 0dbfs = 1
 
-#define STT_DIR # "/Users/pm/AcaHub/Coding/csound-repo/semsys-models/whisper-core/model_e2e" #
-#define EMB_DIR # "/Users/pm/AcaHub/Coding/csound-repo/semsys-models/all-MiniLM-L6-v2/all-MiniLM-L6-v2-e2e" #
+#define STT_DIR # "path/to/model_e2e" #
+#define EMB_DIR # "path/to/text_model_dir" #
 
 ; speech-to-text + embedding model
 h_stt@global:i = semsttload($STT_DIR, 448, 64)

@@ -50,22 +50,27 @@ if(BUILD_SEMSYS_OPCODES)
         )
     endif()
     if(ONNXRUNTIME_LIB AND EXISTS "${ONNXRUNTIME_LIB}")
+        # Package managers install the library as a symlink (e.g. Homebrew's
+        # libonnxruntime.dylib -> ../Cellar/...). install(FILES) would copy the
+        # relative link itself, dangling next to the plugin, so use the real file.
+        get_filename_component(_onnx_real "${ONNXRUNTIME_LIB}" REALPATH)
         add_custom_command(TARGET semsys POST_BUILD
             COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-                "${ONNXRUNTIME_LIB}" "$<TARGET_FILE_DIR:semsys>/${_onnx_name}"
+                "${_onnx_real}" "$<TARGET_FILE_DIR:semsys>/${_onnx_name}"
             VERBATIM)
-        install(FILES "${ONNXRUNTIME_LIB}" DESTINATION "${PLUGIN_INSTALL_DIR}" RENAME "${_onnx_name}")
-        message(STATUS "semsys: bundling onnxruntime from ${ONNXRUNTIME_LIB}")
+        install(FILES "${_onnx_real}" DESTINATION "${PLUGIN_INSTALL_DIR}" RENAME "${_onnx_name}")
+        message(STATUS "semsys: bundling onnxruntime from ${_onnx_real}")
     else()
-        message(STATUS "semsys: onnxruntime runtime lib not bundled "
+        message(WARNING "semsys: onnxruntime runtime lib not bundled "
                        "(pass -DONNXRUNTIME_LIB=/path/${_onnx_name} or -DONNXRUNTIME_ROOT=/root). "
                        "Provide libonnxruntime at runtime via SEMSYS_ONNXRUNTIME or a system install.")
     endif()
 
     # onnxruntime-extensions runtime library (custom ops the E2E embedding/STT graphs
     # need), loaded via RegisterCustomOpsLibrary. -DORT_EXTENSIONS_LIB=/path (explicit)
-    # or discovered under -DORTEXTENSIONS_ROOT / env ORTEXTENSIONS_ROOT. Note: the PyPI
-    # wheel's native lib (onnxruntime_extensions.get_library_path()) works here too.
+    # or discovered under -DORTEXTENSIONS_ROOT / env ORTEXTENSIONS_ROOT. It is not
+    # in the usual package managers, so it is rarely found without one of these. Use
+    # the NuGet native lib or a source build, not the PyPI wheel's (it needs Python).
     if(NOT ORT_EXTENSIONS_LIB)
         find_library(ORT_EXTENSIONS_LIB
             NAMES ortextensions libortextensions
@@ -73,14 +78,16 @@ if(BUILD_SEMSYS_OPCODES)
             PATH_SUFFIXES lib lib64 bin)
     endif()
     if(ORT_EXTENSIONS_LIB AND EXISTS "${ORT_EXTENSIONS_LIB}")
+        # a source build also names it through a versioned symlink chain
+        get_filename_component(_ortext_real "${ORT_EXTENSIONS_LIB}" REALPATH)
         add_custom_command(TARGET semsys POST_BUILD
             COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-                "${ORT_EXTENSIONS_LIB}" "$<TARGET_FILE_DIR:semsys>/${_ortext_name}"
+                "${_ortext_real}" "$<TARGET_FILE_DIR:semsys>/${_ortext_name}"
             VERBATIM)
-        install(FILES "${ORT_EXTENSIONS_LIB}" DESTINATION "${PLUGIN_INSTALL_DIR}" RENAME "${_ortext_name}")
-        message(STATUS "semsys: bundling onnxruntime-extensions from ${ORT_EXTENSIONS_LIB}")
+        install(FILES "${_ortext_real}" DESTINATION "${PLUGIN_INSTALL_DIR}" RENAME "${_ortext_name}")
+        message(STATUS "semsys: bundling onnxruntime-extensions from ${_ortext_real}")
     else()
-        message(STATUS "semsys: onnxruntime-extensions not bundled "
+        message(WARNING "semsys: onnxruntime-extensions not bundled "
                        "(pass -DORT_EXTENSIONS_LIB=/path/${_ortext_name} or -DORTEXTENSIONS_ROOT=/root). "
                        "Provide it at runtime via SEMSYS_ORT_EXTENSIONS.")
     endif()

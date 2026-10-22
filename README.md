@@ -266,13 +266,41 @@ they use (`corpus.txt`, `corpus.espc`, `sounds.espc`) sit in the same directory.
 > use **placeholder** paths: `"path/to/text_model_dir"`, `"path/to/audio_model_dir"`,
 > `"path/to/model_e2e"`. semsys ships **no** models, so before running anything, replace
 > those with the directory of an end-to-end `model.onnx` you downloaded or exported (see
-> [ONNX models](#onnx-models)). The audio/STT examples also expect your own `.wav` inputs.
+> [ONNX models](#onnx-models)).
+
+> **Bring your own audio.** The repository ships **no** audio media: `.wav` files are
+> git-ignored and are not included. The audio and STT examples read these files from
+> `examples/`, so add them (or edit the paths in the `.csd`) before running:
+>
+> | File | Used by | Content |
+> |---|---|---|
+> | `mallets_on_piano.wav` | `semembedaudio*`, `semspaceaddaudio`, `semspacequeryaudio*` | any sound to embed or query |
+> | `spoken.wav` | `semstt*`, `semspacequerytxt` | a short speech recording |
+> | `vox.wav` | `semsttload`, `semspacequerytxt` | any sound to play back |
+> | `audio_space_wav/*.wav` | `semspacequeryaudio*` | a folder of sounds to build the audio space from |
+>
+> Files that semsys reads itself (embedding, space building, STT from file) must be PCM16 WAV.
 
 ## Tests
 
 The smoke test score is in `utest/utest.csd`, with its fixtures under `utest/utest_data`.
 It exercises the semsys opcodes and prints `[PASS]`, `[FAIL]`, `[SKIP]`, or `[INFO]`
 messages for each check.
+
+The fixtures are **not** in the repository (only empty placeholder folders are). Before
+running, provide:
+
+| Path under `utest/` | Content |
+|---|---|
+| `utest_data/corpus_a.txt` | a text corpus |
+| `utest_data/texts/*.txt` | a folder of text files |
+| `utest_data/mallets_on_piano.wav` | any sound (PCM16 WAV) |
+| `utest_data/spoken.wav` | a short speech recording (PCM16 WAV) |
+| `utest_data/audio_space_wav/*.wav` | a folder of sounds (PCM16 WAV) |
+
+Also set the model directories at the top of `utest.csd`. Generated `.espc` files go to
+`utest/espc/`. Run the test from `utest/` in real time (the default `-o dac`):
+with `-n` the score finishes faster than the speech-to-text jobs and they time out.
 
 ## Building
 
@@ -284,19 +312,28 @@ Once semsys is in the [risset](https://github.com/csound-plugins/risset) index:
 risset install semsys
 ```
 
-risset downloads the prebuilt binary for your platform. You still supply the ONNX
-**runtime libraries** and the **models** yourself (see below and [`semload`](doc/semload.md)).
+risset downloads the prebuilt plugin for your platform together with the official
+ONNX **runtime libraries** (`libonnxruntime`, `libortextensions`), which it installs
+in its assets folder (`<risset data dir>/assets/semsys/`), where the plugin looks for
+them. You still supply the **models** yourself (see [`semload`](doc/semload.md)).
+
+| Platform | Runtime libraries installed by risset |
+|---|---|
+| macOS arm64 | both (ONNX Runtime needs **macOS 14** or newer) |
+| Linux x86_64 | both (glibc 2.34 or newer) |
+| Windows x86_64 | both (needs the Microsoft Visual C++ Redistributable) |
+| macOS x86_64 | `libortextensions` only |
+
+ONNX Runtime no longer publishes macOS Intel builds, so on an Intel Mac install it
+yourself (e.g. `brew install onnxruntime`) and point `SEMSYS_ONNXRUNTIME` at it.
 
 ### From the release
 
-The prebuilt package in the [releases](https://github.com/PasqualeMainolfi/csound-semsys/releases)
-includes the `semsys` plugin, but **not** its two ONNX runtime libraries. To run it you
-supply, yourself:
-
-- `libonnxruntime` and `libortextensions` — get them as described under **Manual build**
-  below, then either drop them next to the plugin or point `SEMSYS_ONNXRUNTIME` /
-  `SEMSYS_ORT_EXTENSIONS` at them;
-- the ONNX **models** (see [`semload`](doc/semload.md)).
+Each archive in the [releases](https://github.com/PasqualeMainolfi/csound-semsys/releases)
+contains the `semsys` plugin, the official ONNX Runtime and onnxruntime-extensions
+libraries (same platform limits as the table above), and their license notices under
+`licenses/`. Copy the plugin **and** the libraries together into your Csound plugin
+directory, then supply the ONNX **models** (see [`semload`](doc/semload.md)).
 
 ### Manual build
 
@@ -309,7 +346,8 @@ dependency is the **Csound plugin SDK headers** (`csdl.h`, `csound.h`, `sysdep.h
   auto-detected, so you often need no flag at all;
 - or a **Csound source checkout**'s `include/` directory. A source checkout generates
   `version.h` outside `include/`; the build auto-finds it under
-  `Android/CsoundAndroid/jni`, otherwise pass
+  `platform/android/CsoundAndroid/jni` (`Android/CsoundAndroid/jni` before Csound
+  7.0.0), otherwise pass
   `-DCSOUND_EXTRA_INCLUDE_DIRS=/dir/with/version.h`.
 
 semsys loads ONNX Runtime dynamically, so it **compiles with no ONNX SDK installed** (the
@@ -327,6 +365,16 @@ cmake -S . -B build -DCSOUND_INCLUDE_DIR=/path/to/csound/include \
       -DORT_EXTENSIONS_LIB=/path/to/libortextensions.dylib
 cmake --build build --target semsys --parallel
 ```
+
+`cmake --install build` then copies all three libraries (`libsemsys`, `libonnxruntime`,
+`libortextensions`) into the Csound plugin directory, resolving package-manager symlinks
+to the real files. A library the configure step could not find is not installed, and
+configure prints a `CMake Warning` for it.
+
+On macOS a Homebrew `libonnxruntime` still links against other Homebrew libraries
+(abseil, protobuf, onnx, re2), so the bundled copy only runs where those are installed.
+For a fully self-contained plugin use the official ONNX Runtime release build instead
+(`-DONNXRUNTIME_LIB=/path/to/libonnxruntime.dylib`).
 
 **Option B — don't bundle, give it at runtime:**
 
@@ -353,8 +401,12 @@ Notes:
 
 At `semload` time the plugin resolves each library in order:
 
-- **onnxruntime**: `SEMSYS_ONNXRUNTIME` env → next to the plugin → the system loader's default paths.
-- **onnxruntime-extensions**: `SEMSYS_ORT_EXTENSIONS` env → next to the plugin → next to the model directory.
+- **onnxruntime**: `SEMSYS_ONNXRUNTIME` env → next to the plugin → the risset assets folder → the system loader's default paths.
+- **onnxruntime-extensions**: `SEMSYS_ORT_EXTENSIONS` env → next to the plugin → the risset assets folder → next to the model directory.
+
+The risset assets folder is `~/Library/Application Support/risset/assets/semsys/` on
+macOS, `~/.local/share/risset/assets/semsys/` on Linux and
+`%LOCALAPPDATA%\risset\assets\semsys\` on Windows.
 
 > NOTE: The system-loader step for **onnxruntime** covers only standard paths (`/usr/lib`,
 > `DYLD_*` / `LD_LIBRARY_PATH`). **Homebrew's `/opt/homebrew/lib` is *not* among them** —
